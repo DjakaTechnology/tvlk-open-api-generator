@@ -315,6 +315,7 @@ public class KotlinClientCodegenModelTest {
         Assert.assertEquals(cm.name, "sample");
         Assert.assertEquals(cm.classname, "Sample");
         Assert.assertEquals(cm.description, "a sample model");
+        Assert.assertEquals(cm.imports.size(), 1);
         Assert.assertEquals(cm.vars.size(), 1);
 
         final CodegenProperty property1 = cm.vars.get(0);
@@ -325,6 +326,29 @@ public class KotlinClientCodegenModelTest {
         Assert.assertFalse(property1.required);
         Assert.assertFalse(property1.isContainer);
     }
+
+    @Test(description = "convert a model with imported complex property")
+    public void importedComplexPropertyTest() {
+        final Schema model = getComplexSchema();
+        final DefaultCodegen codegen = new KotlinClientCodegen();
+        codegen.importMapping().put("Child", "org.example.Child");
+        final CodegenModel cm = codegen.fromModel("sample", model);
+
+        Assert.assertEquals(cm.name, "sample");
+        Assert.assertEquals(cm.classname, "Sample");
+        Assert.assertEquals(cm.description, "a sample model");
+        Assert.assertEquals(cm.imports.size(), 0);
+        Assert.assertEquals(cm.vars.size(), 1);
+
+        final CodegenProperty property1 = cm.vars.get(0);
+        Assert.assertEquals(property1.baseName, "child");
+        Assert.assertEquals(property1.dataType, "org.example.Child");
+        Assert.assertEquals(property1.name, "child");
+        Assert.assertEquals(property1.baseType, "org.example.Child");
+        Assert.assertFalse(property1.required);
+        Assert.assertFalse(property1.isContainer);
+    }
+
 
     @DataProvider(name = "modelNames")
     public static Object[][] modelNames() {
