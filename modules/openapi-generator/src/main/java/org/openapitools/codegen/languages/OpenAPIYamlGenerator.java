@@ -17,10 +17,6 @@
 
 package org.openapitools.codegen.languages;
 
-import io.swagger.v3.oas.models.OpenAPI;
-import io.swagger.v3.oas.models.PathItem;
-import io.swagger.v3.oas.models.Paths;
-import io.swagger.v3.oas.models.media.*;
 import org.openapitools.codegen.*;
 import org.openapitools.codegen.meta.features.*;
 import org.openapitools.codegen.templating.mustache.OnChangeLambda;
@@ -32,7 +28,10 @@ import com.samskivert.mustache.Mustache.Lambda;
 
 import io.swagger.v3.oas.models.Operation;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Map;
 
 public class OpenAPIYamlGenerator extends DefaultCodegen implements CodegenConfig {
     public static final String OUTPUT_NAME = "outputFile";
@@ -105,75 +104,8 @@ public class OpenAPIYamlGenerator extends DefaultCodegen implements CodegenConfi
 
     @Override
     public Map<String, Object> postProcessSupportingFileData(Map<String, Object> objs) {
-        OpenAPI openAPI = ((OpenAPI) objs.get("openAPI"));
-        Paths currentPath = openAPI.getPaths();
-        Set<String> pathKeys = currentPath.keySet();
-        Paths resultPath = new Paths();
-        for (String key: pathKeys) {
-            PathItem item = currentPath.get(key);
-            Content itemContent = item.getPost().getRequestBody().getContent();
-
-            for(MediaType mediaType: itemContent.values()) {
-                Schema schema = mediaType.getSchema();
-
-                String tempRef = schema.get$ref();
-
-                schema.setName("inline_object");
-                schema.setType("object");
-                schema.$ref(null);
-                schema.setProperties(createTravelokaProperties(tempRef));
-            }
-
-            resultPath.addPathItem(key, item);
-        }
-        openAPI.setPaths(resultPath);
-
         generateYAMLSpecFile(objs);
         return super.postProcessSupportingFileData(objs);
-    }
-
-    LinkedHashMap<String, Schema> createTravelokaProperties(String ref) {
-        StringSchema clientInterface = new StringSchema();
-        clientInterface.example("mobile-android");
-
-        Schema data = new Schema();
-        data.$ref(ref);
-
-        Schema context = generateContextSchema();
-
-        ArraySchema field = new ArraySchema();
-        field.example(new String[0]);
-
-        LinkedHashMap<String, Schema> result = new LinkedHashMap<>();
-        result.put("clientInterface", clientInterface);
-        result.put("context", context);
-        result.put("data", data);
-        result.put("fields", field);
-
-
-        return result;
-    }
-
-    private Schema generateContextSchema() {
-        StringSchema nonce = new StringSchema();
-        nonce.setExample("nonce");
-
-        StringSchema tvLifeTime = new StringSchema();
-        tvLifeTime.setExample("LIFE_TIME_KEY_HERE");
-
-        StringSchema tvSession = new StringSchema();
-        tvSession.setExample("SESSION_KEY_HERE");
-
-        LinkedHashMap<String, Schema> properties = new LinkedHashMap<>();
-        properties.put("nonce", nonce);
-        properties.put("tvLifeTime", tvLifeTime);
-        properties.put("tvSession", tvSession);
-
-        Schema contextSchema = new Schema();
-        contextSchema.setProperties(properties);
-        contextSchema.setType("object");
-
-        return contextSchema;
     }
 
     @Override

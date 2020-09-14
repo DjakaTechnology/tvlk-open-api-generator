@@ -71,7 +71,7 @@ public class YamlGeneratorTest {
         final CodegenConfigurator configurator = new CodegenConfigurator()
                 .setGeneratorName("openapi-yaml")
                 .setAdditionalProperties(properties)
-                .setInputSpec("src/test/resources/3_0/petstore.yaml")
+                .setInputSpec("src/test/resources/3_0/ping.yaml")
                 .setOutputDir(output.getAbsolutePath().replace("\\", "/"));
 
         final ClientOptInput clientOptInput = configurator.toClientOptInput();
