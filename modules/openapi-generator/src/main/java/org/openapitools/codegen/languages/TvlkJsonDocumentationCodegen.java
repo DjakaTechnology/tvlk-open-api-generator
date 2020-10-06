@@ -1,42 +1,41 @@
 package org.openapitools.codegen.languages;
 
-import com.google.common.collect.ImmutableMap;
-import com.samskivert.mustache.Mustache;
 import io.swagger.v3.oas.models.OpenAPI;
-import io.swagger.v3.oas.models.Operation;
 import io.swagger.v3.oas.models.PathItem;
 import io.swagger.v3.oas.models.Paths;
 import io.swagger.v3.oas.models.media.*;
 import org.openapitools.codegen.*;
 import org.openapitools.codegen.meta.features.*;
-import org.openapitools.codegen.templating.mustache.OnChangeLambda;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.util.*;
+import java.util.EnumSet;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Set;
 
-public class TvlkYamlDocumentationCodegen extends DefaultCodegen implements CodegenConfig {
+public class TvlkJsonDocumentationCodegen extends DefaultCodegen implements CodegenConfig {
+    private static final Logger LOGGER = LoggerFactory.getLogger(TvlkJsonDocumentationCodegen.class);
     public static final String PROJECT_NAME = "projectName";
     public static final String OUTPUT_NAME = "outputFile";
 
-    static Logger LOGGER = LoggerFactory.getLogger(TvlkYamlDocumentationCodegen.class);
+    protected String outputFile = "tvlk-doc.json";
 
-    protected String outputFile = "tvlk-doc.yaml";
-
+    @Override
     public CodegenType getTag() {
         return CodegenType.DOCUMENTATION;
     }
 
     public String getName() {
-        return "tvlk-yaml";
+        return "tvlk-json";
     }
 
     public String getHelp() {
-        return "Generates a tvlk-yaml documentation.";
+        return "Generates a tvlk-json documentation.";
     }
 
-    public TvlkYamlDocumentationCodegen() {
+    public TvlkJsonDocumentationCodegen() {
         super();
 
         modifyFeatureSet(features -> features
@@ -49,8 +48,8 @@ public class TvlkYamlDocumentationCodegen extends DefaultCodegen implements Code
                 .schemaSupportFeatures(EnumSet.allOf(SchemaSupportFeature.class))
         );
 
-        outputFolder = "generated-code" + File.separator + "tvlk-yaml";
-        embeddedTemplateDir = templateDir = "tvlk-yaml-documentation";
+        outputFolder = "generated-code" + File.separator + "tvlk-json";
+        embeddedTemplateDir = templateDir = "tvlk-json-documentation";
         cliOptions.add(CliOption.newString(OUTPUT_NAME, "Output filename").defaultValue(outputFile));
     }
 
@@ -79,7 +78,7 @@ public class TvlkYamlDocumentationCodegen extends DefaultCodegen implements Code
         }
         openAPI.setPaths(resultPath);
 
-        generateYAMLSpecFile(objs);
+        generateJSONSpecFile(objs);
         return super.postProcessSupportingFileData(objs);
     }
 
@@ -136,24 +135,6 @@ public class TvlkYamlDocumentationCodegen extends DefaultCodegen implements Code
         }
         LOGGER.info("Output file [outputFile={}]", outputFile);
         supportingFiles.add(new SupportingFile("openapi.mustache", outputFile));
-    }
-
-    /**
-     * Group operations by resourcePath so that operations with same path and
-     * different http method can be rendered one after the other.
-     */
-    @Override
-    public void addOperationToGroup(String tag, String resourcePath, Operation operation, CodegenOperation
-            co, Map<String, List<CodegenOperation>> operations) {
-        List<CodegenOperation> opList = operations.computeIfAbsent(resourcePath,
-                k -> new ArrayList<>());
-        opList.add(co);
-    }
-
-    @Override
-    protected ImmutableMap.Builder<String, Mustache.Lambda> addMustacheLambdas() {
-        return super.addMustacheLambdas()
-                .put("onchange", new OnChangeLambda());
     }
 
     @Override
