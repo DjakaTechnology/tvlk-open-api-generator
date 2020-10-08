@@ -67,6 +67,8 @@ public abstract class AbstractKotlinCodegen extends DefaultCodegen implements Co
 
     protected boolean nonPublicApi = false;
 
+    protected HashSet<String> parcelizedModeSet = new HashSet<>();
+
     protected CodegenConstants.ENUM_PROPERTY_NAMING_TYPE enumPropertyNaming = CodegenConstants.ENUM_PROPERTY_NAMING_TYPE.camelCase;
     protected SERIALIZATION_LIBRARY_TYPE serializationLibrary = SERIALIZATION_LIBRARY_TYPE.moshi;
 
@@ -195,6 +197,7 @@ public abstract class AbstractKotlinCodegen extends DefaultCodegen implements Co
         cliOptions.add(serializationLibraryOpt.defaultValue(serializationLibrary.name()));
 
         cliOptions.add(new CliOption(CodegenConstants.PARCELIZE_MODELS, CodegenConstants.PARCELIZE_MODELS_DESC));
+        cliOptions.add(new CliOption(CodegenConstants.PARCELIZE_MODEL_SET, CodegenConstants.PARCELIZE_MODEL_SET_DESC));
         cliOptions.add(new CliOption(CodegenConstants.SERIALIZABLE_MODEL, CodegenConstants.SERIALIZABLE_MODEL_DESC));
         cliOptions.add(new CliOption(CodegenConstants.SORT_PARAMS_BY_REQUIRED_FLAG, CodegenConstants.SORT_PARAMS_BY_REQUIRED_FLAG_DESC));
         cliOptions.add(new CliOption(CodegenConstants.SORT_MODEL_PROPERTIES_BY_REQUIRED_FLAG, CodegenConstants.SORT_MODEL_PROPERTIES_BY_REQUIRED_FLAG_DESC));
@@ -346,6 +349,8 @@ public abstract class AbstractKotlinCodegen extends DefaultCodegen implements Co
                     break;
                 }
             }
+
+            cm.vendorExtensions.put("x-is-parcel", parcelizedModeSet.contains(cm.name) || parcelizeModels);
         }
         return postProcessModelsEnum(objs);
     }
@@ -424,6 +429,13 @@ public abstract class AbstractKotlinCodegen extends DefaultCodegen implements Co
             additionalProperties.put(CodegenConstants.PARCELIZE_MODELS, parcelizeModels);
         }
 
+        if (additionalProperties.containsKey(CodegenConstants.PARCELIZE_MODEL_SET)) {
+            Object model = additionalProperties.get(CodegenConstants.PARCELIZE_MODEL_SET);
+            if (model instanceof List) {
+                this.getParcelizedModeSet().addAll((List<String>) model);
+            }
+        }
+
         if (additionalProperties.containsKey(CodegenConstants.NON_PUBLIC_API)) {
             this.setNonPublicApi(convertPropertyToBooleanAndWriteBack(CodegenConstants.NON_PUBLIC_API));
         } else {
@@ -498,6 +510,14 @@ public abstract class AbstractKotlinCodegen extends DefaultCodegen implements Co
 
     public void setNeedsDataClassBody(boolean needsDataClassBody) {
         this.needsDataClassBody = needsDataClassBody;
+    }
+
+    public HashSet<String> getParcelizedModeSet() {
+        return parcelizedModeSet;
+    }
+
+    public void setParcelizedModeSet(HashSet<String> parcelizedModeSet) {
+        this.parcelizedModeSet = parcelizedModeSet;
     }
 
     /**
